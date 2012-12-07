@@ -8,8 +8,9 @@ public class Plane {
 
   private int status = WAITING;
 
-  private Party party;
-  private Cell position;
+  private final Party party;
+  public int landingHeight;
+  public Cell position;
 
   public void takeOff(){
   }
@@ -23,7 +24,6 @@ public class Plane {
   public void complete() {
   }
 
-  public void setPositiion(Cell pos){
-    position = pos;
+  public void onMove(int step){
   }
 }
