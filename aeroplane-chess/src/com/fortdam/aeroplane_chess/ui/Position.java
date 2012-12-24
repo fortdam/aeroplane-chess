@@ -12,7 +12,7 @@ public class Position {
         switch(type){
         case TYPE_ROUTE:
         	if (index <= route.length/2){
-        		return new Point(route[index/2], route[index/2 + 1]);
+        		return new Point(route[index*2], route[index*2 + 1]);
         	}
         	break;
         default:
