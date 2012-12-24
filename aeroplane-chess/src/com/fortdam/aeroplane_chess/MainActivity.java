@@ -3,11 +3,17 @@ package com.fortdam.aeroplane_chess;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsoluteLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.fortdam.aeroplane_chess.ui.Position;
 
 class UIElement {
 	UIElement(BitmapDrawable pic){
@@ -23,10 +29,10 @@ class UIElement {
 	
 	public void setVisibility(boolean visible){
 		if (visible == true){
-			picture.setVisibility(VISIBLE);
+			picture.setVisibility(View.VISIBLE);
 		}
 		else{
-			picture.setVisibility(INVISIBLE);
+			picture.setVisibility(View.INVISIBLE);
 		}
 		
 	}
@@ -67,11 +73,25 @@ public class MainActivity extends Activity {
 		String text = "DD: "+ dispRatio;
 		int duration = Toast.LENGTH_SHORT;
 
+
+		
+		Point begin = mapPosition(Position.getRouteCord(Position.TYPE_ROUTE, 0));
+		text += " : " + begin;
+	
+		
+		ImageView testChess = new ImageView(getApplicationContext());
+		testChess.setImageResource(R.drawable.blue);
+		;
+		ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
+		holder.addView(testChess,
+		new AbsoluteLayout.LayoutParams(20,20,20,20));
+//				testChess.getWidth(), testChess.getHeight(), begin.x, begin.y));
+		holder.removeView(findViewById(R.id.startTest));
+		//holder.invalidate();
+
+		text += " "+testChess.getWidth()+" "+testChess.getHeight()+" "+begin.x+" "+begin.y;
 		Toast toast = Toast.makeText(context, text, duration);
 		toast.show();
-		
-		
-		
 	}
 	
 	@Override
