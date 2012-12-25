@@ -20,13 +20,18 @@ import com.fortdam.aeroplane_chess.ui.Position;
 class UIElement {
 	
 	public static Context context = null;
-	public static float dispRatio = 1;
+	public static float dispRatio = 999; //Just put an invalid number
 	
 	interface AnimationEventHandler {
 		public void animEnd();
 	}
 
-	UIElement (int resId){
+	UIElement (int resId) throws Exception{
+		if (null == context){
+			throw new Exception("The context of UIElement is not initialized");
+		}
+		
+		//Crate the icon item
 		ImageView icon = new ImageView(context);
 		icon.setImageResource(resId);
 		icon.setAdjustViewBounds(true);
@@ -37,19 +42,21 @@ class UIElement {
 		options.inJustDecodeBounds = true;
 		BitmapFactory.decodeResource(context.getResources(), resId, options);
 		
+		if (dispRatio > 100){
+			throw new Exception("dispRatio probably not initialized");
+		}
 		width = (int)(options.outWidth * dispRatio);
 		height = (int)(options.outHeight * dispRatio);
 		
 		icon.setMaxWidth(width);
 		icon.setMaxHeight(height);
-		Log.i("Aeroplane", "The size is:"+width+","+height);
-		
+
 		item = icon;
 
-		Log.i("Aeroplane", "Create a new element "+icon);
+		Log.i("Aeroplane", "Create a new element "+icon+" size ["+width+","+height+"]");
 	}
 	
-	public void move(Point pt, final AnimationEventHandler handler){
+	public void move(Point pt, final Animation.AnimationListener handler){
 		//Play animation;
 		pt.x = (int)(pt.x * dispRatio);
 		pt.y = (int)(pt.y * dispRatio);
@@ -77,18 +84,24 @@ class UIElement {
 										x - width/2, y - height/2));
 				
 						if (handler != null){
-							handler.animEnd();
+							handler.onAnimationEnd(anim);
 						}
-						Log.i("Aeroplane", "Animatino end");
+						Log.i("Aeroplane", "Animation end");
 					}
 			
 					@Override
 					public void onAnimationRepeat(Animation anim){
+						if (handler != null){
+							handler.onAnimationRepeat(anim);
+						}
 						Log.i("Aeroplane", "Animation repeat");
 					}
 			
 					@Override
 					public void onAnimationStart(Animation anim){
+						if (handler != null){
+							handler.onAnimationStart(anim);
+						}
 						Log.i("Aeroplane", "Animation start");
 					}
 				});
@@ -101,17 +114,29 @@ class UIElement {
 		Log.i("Aeroplane", "Move the element to:" +x+","+y);
 	}
 	
-	public void insert(ViewGroup parent, Point pt){
+	public void insert(ViewGroup parent, Point pt) throws Exception{
 		x = (int)(pt.x * dispRatio);
 		y = (int)(pt.y * dispRatio);
 		
-		parent.addView(item,
-				new AbsoluteLayout.LayoutParams(
-						ViewGroup.LayoutParams.WRAP_CONTENT, 
-						ViewGroup.LayoutParams.WRAP_CONTENT, 
-						x - width/2, y - height/2));
-		
-		Log.i("Aeroplane", "Insert the element "+item+"at:"+x+","+y);
+		if (parent.indexOfChild(item) != -1){
+			Log.w("Aeroplane", "The view is already inserted into the parent "+item);
+			
+			parent.updateViewLayout(item, 
+					new AbsoluteLayout.LayoutParams(
+							ViewGroup.LayoutParams.WRAP_CONTENT, 
+							ViewGroup.LayoutParams.WRAP_CONTENT, 
+							x - width/2, y - height/2));		
+		}
+		else {					
+			Log.i("Aeroplane", "Insert the element "+item+"at:"+x+","+y);
+			
+			parent.addView(item,
+					new AbsoluteLayout.LayoutParams(
+							ViewGroup.LayoutParams.WRAP_CONTENT, 
+							ViewGroup.LayoutParams.WRAP_CONTENT, 
+							x - width/2, y - height/2));
+
+		}
 	}
 	
 	public void setVisibility(boolean visible){
@@ -126,8 +151,7 @@ class UIElement {
 }
 
 
-public class MainActivity extends Activity 
-		implements UIElement.AnimationEventHandler{
+public class MainActivity extends Activity {
 	
 	private static final String debug="Aeroplane";
 		
@@ -136,25 +160,6 @@ public class MainActivity extends Activity
 	private float startX = 0;
 	private float startY = 0;
 	
-	static int index = 2;
-	
-	public void animEnd(){
-	    if(index < 52){
-	        items[0].move(Position.getRouteCord(Position.TYPE_ROUTE, index++), this);
-	    }
-	    else if (index-52 < 24){
-	        items[0].move(Position.getRouteCord(Position.TYPE_LANE, index-52), this);
-	        index++;
-	    }
-	    else if (index-52-24 < 16){
-	        items[0].move(Position.getRouteCord(Position.TYPE_PORT, index-52-24), this);
-	        index++;
-	    }
-	    else if (index-52-24-16 < 4){
-	        items[0].move(Position.getRouteCord(Position.TYPE_START, index-52-24-16), this);
-	        index++;
-	    }
-	}
 	
 	private void setDispProperties(){
 		View map = findViewById(R.id.mapView);
@@ -177,11 +182,47 @@ public class MainActivity extends Activity
 		
 		Point begin = Position.getRouteCord(Position.TYPE_ROUTE, 0);
 		
-        items[0] = new UIElement(R.drawable.blue);
-		ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
-		items[0].insert(holder, begin);
+		try {
+			items[0] = new UIElement(R.drawable.blue);
+			ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
+			items[0].insert(holder, begin);
+		}
+		catch (Exception e){
+			e.printStackTrace();
+		}
 		
-		items[0].move(Position.getRouteCord(Position.TYPE_ROUTE, 1), this);
+		final UIElement movingItem = items[0];
+		
+		movingItem.move(Position.getRouteCord(Position.TYPE_ROUTE, 1), 
+				new Animation.AnimationListener() {
+			 		private int index = 2; //Next position start from 2
+			 		
+					@Override
+					public void onAnimationEnd(Animation anim){
+						if(index < 52){
+							movingItem.move(Position.getRouteCord(Position.TYPE_ROUTE, index++), this);
+					    }
+					    else if (index-52 < 24){
+					    	movingItem.move(Position.getRouteCord(Position.TYPE_LANE, index-52), this);
+					        index++;
+					    }
+					    else if (index-52-24 < 16){
+					    	movingItem.move(Position.getRouteCord(Position.TYPE_PORT, index-52-24), this);
+					        index++;
+					    }
+					    else if (index-52-24-16 < 4){
+					    	movingItem.move(Position.getRouteCord(Position.TYPE_START, index-52-24-16), this);
+					        index++;
+					    }
+					}
+					
+					@Override
+					public void onAnimationRepeat(Animation anim){}
+					
+					@Override
+					public void onAnimationStart(Animation anim){}
+			
+		});
 	}
 	
 	@Override
