@@ -1,6 +1,5 @@
 package com.fortdam.aeroplane_chess;
 
-import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
@@ -12,40 +11,79 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.TranslateAnimation;
 import android.widget.AbsoluteLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.fortdam.aeroplane_chess.ui.Position;
 
-class UIElement {
+class UIElement implements Animation.AnimationListener{
 	public static Context context = null;
+	public static float dispRatio = 1;
+	
+	interface AnimationEventHandler {
+		public void animEnd();
+	}
 
 	UIElement (int resId, Point pt){
-		icon = new ImageView(context);
-		((ImageView) icon).setImageResource(resId);
+		ImageView view = new ImageView(context);
+		view.setImageResource(resId);
+		view.setAdjustViewBounds(true);
+		view.setVisibility(View.VISIBLE);
 		
-		x = pt.x;
-		y = pt.y;
+		//Set the proportion of the image.
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = true;
+		BitmapFactory.decodeResource(context.getResources(), resId, options);
+		
+		width = (int)(options.outWidth * dispRatio);
+		height = (int)(options.outHeight * dispRatio);
+		
+		view.setMaxWidth(width);
+		view.setMaxHeight(height);
+		Log.i("Aeroplane", "The size is:"+width+","+height);
+		
+		icon = view;
+		x = (int)(pt.x * dispRatio);
+		y = (int)(pt.y * dispRatio);
+		Log.i("Aeroplane", "Create a new element "+view+" at:"+x+","+y);
 	}
 	
-	public void move(Point pt){
+	public void move(Point pt, AnimationEventHandler handler){
+		//Play animation;
+		pt.x = (int)(pt.x * dispRatio);
+		pt.y = (int)(pt.y * dispRatio);
+		
+		AnimationSet anim = new AnimationSet(false);
+		TranslateAnimation trans = new TranslateAnimation(
+				TranslateAnimation.ABSOLUTE, 0,
+				TranslateAnimation.ABSOLUTE, pt.x - x,
+				TranslateAnimation.ABSOLUTE, 0,
+				TranslateAnimation.ABSOLUTE, pt.y - y);
+		trans.setDuration(500);
+		anim.addAnimation(trans);
+		anim.setFillAfter(true);
+		anim.setFillEnabled(true);
+		anim.setAnimationListener(this);
+		icon.startAnimation(anim);
+		
+		//Update the current position
 		x = pt.x;
 		y = pt.y;
-		Log.w("Aeroplane", "The new position is:"+x+","+y);
-		ViewGroup parent = (ViewGroup)icon.getParent();
-		parent.updateViewLayout(icon, 
-				new AbsoluteLayout.LayoutParams(
-						ViewGroup.LayoutParams.WRAP_CONTENT,
-						ViewGroup.LayoutParams.WRAP_CONTENT,
-						x,y));
+		animHandler = handler;
+		Log.i("Aeroplane", "Move the element to:" +x+","+y);
 	}
 	
 	public void insert(ViewGroup parent){
 		parent.addView(icon,
 				new AbsoluteLayout.LayoutParams(
 						ViewGroup.LayoutParams.WRAP_CONTENT, 
-						ViewGroup.LayoutParams.WRAP_CONTENT, x, y));
+						ViewGroup.LayoutParams.WRAP_CONTENT, 
+						x - width/2, y - height/2));
+		Log.i("Aeroplane", "Insert the element "+icon+"at:"+x+","+y);
 	}
 	
 	public void setVisibility(boolean visible){
@@ -58,13 +96,42 @@ class UIElement {
 		
 	}
 	
-	public View icon;
-	public int x;
-	public int y;
+	@Override
+	public void onAnimationEnd(Animation anim){
+		ViewGroup parent = (ViewGroup)icon.getParent();
+		parent.updateViewLayout(icon, 
+				new AbsoluteLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				x - width/2, y - height/2));
+		
+		if (animHandler != null){
+			animHandler.animEnd();
+		}
+		Log.i("Aeroplane", "Animatino end");
+	}
+	
+	@Override
+	public void onAnimationRepeat(Animation anim){
+		Log.i("Aeroplane", "Animation repeat");
+	}
+	
+	@Override
+	public void onAnimationStart(Animation anim){
+		Log.i("Aeroplane", "Animation start");
+	}
+	
+	private View icon;
+	private int x; //Represents the center of x axis
+	private int y; //Represents the center of y axis
+	private int width;
+	private int height;
+	private AnimationEventHandler animHandler = null;
 }
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity 
+		implements UIElement.AnimationEventHandler{
 	
 	private static final String debug="Aeroplane";
 		
@@ -73,8 +140,24 @@ public class MainActivity extends Activity {
 	private float startX = 0;
 	private float startY = 0;
 	
-	private Point mapPosition(Point pt){
-		return new Point((int)(pt.x*dispRatio), (int)(pt.y*dispRatio));
+	static int index = 2;
+	
+	public void animEnd(){
+	    if(index < 52){
+	        items[0].move(Position.getRouteCord(Position.TYPE_ROUTE, index++), this);
+	    }
+	    else if (index-52 < 24){
+	        items[0].move(Position.getRouteCord(Position.TYPE_LANE, index-52), this);
+	        index++;
+	    }
+	    else if (index-52-24 < 16){
+	        items[0].move(Position.getRouteCord(Position.TYPE_PORT, index-52-24), this);
+	        index++;
+	    }
+	    else if (index-52-24-16 < 4){
+	        items[0].move(Position.getRouteCord(Position.TYPE_START, index-52-24-16), this);
+	        index++;
+	    }
 	}
 	
 	private void setDispProperties(){
@@ -82,30 +165,27 @@ public class MainActivity extends Activity {
 		startX = map.getLeft() + map.getPaddingLeft();
 		startY = map.getTop() + map.getPaddingTop();
 		
-		Log.i(debug, "The position of the map is:"+startX+","+startY);
-		Log.i(debug, "The measured size of the map is:"+map.getMeasuredWidth()+","+map.getMeasuredHeight());
-		Log.i(debug, "The size of the map is:"+map.getWidth()+","+map.getHeight());
-		Log.i(debug, "The right/bottom position of the map is:"+map.getRight()+","+map.getBottom());
 		//Get the Original size of the image
 		BitmapFactory.Options options = new BitmapFactory.Options();
 		options.inJustDecodeBounds = true;
 		BitmapFactory.decodeResource(getResources(), R.drawable.map, options);
 
 		dispRatio = (float)map.getWidth() / (float)options.outWidth;
+		UIElement.dispRatio = dispRatio;
+		Log.i("Aeroplane", "The disp Ratio is:"+dispRatio);
 	}
 	
 	class MyJob extends TimerTask{
+		
 		private Activity app;
 		MyJob(Activity app){
 			this.app = app;
 		}
 		@Override
 		public void run(){
-			final Point newPos = mapPosition(Position.getRouteCord(Position.TYPE_ROUTE, 1));
-			Log.i(debug, "The new position is:"+newPos);
 			app.runOnUiThread (new Runnable(){
 				public void run(){
-					items[0].move(newPos);
+					//items[0].move(Position.getRouteCord(Position.TYPE_ROUTE, 1));
 				}
 				});
 		}
@@ -116,26 +196,20 @@ public class MainActivity extends Activity {
 		setDispProperties();
 		String text = "DD: "+ dispRatio;
 		int duration = Toast.LENGTH_SHORT;
-
-
 		
-		Point begin = mapPosition(Position.getRouteCord(Position.TYPE_ROUTE, 0));
+		Point begin = Position.getRouteCord(Position.TYPE_ROUTE, 0);
 		text += " : " + begin;
 		
         items[0] = new UIElement(R.drawable.blue, begin);
 		ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
 		items[0].insert(holder);
-        holder.invalidate();
-        Log.i(debug, "The chess position is:" + items[0].x+","+items[0].y);
-        Log.i(debug, "The size of chess is:" + items[0].icon.getWidth()+","+items[0].icon.getHeight());
-        Log.i(debug, "The position of layout is:"+holder.getLeft()+","+holder.getTop());
-        Log.i(debug, "The size of layout is:"+holder.getWidth()+","+holder.getHeight());
-		//text += " "+items[0].icon.getWidth()+" "+items[0].icon.getHeight();
-		Toast toast = Toast.makeText(context, text, duration);
+
+ 		Toast toast = Toast.makeText(context, text, duration);
 		toast.show();
 		
-		Timer timer = new Timer("tester");
-		timer.schedule(new MyJob(this), 1000);
+		items[0].move(Position.getRouteCord(Position.TYPE_ROUTE, 1), this);
+		//Timer timer = new Timer("tester");
+		//timer.schedule(new MyJob(this), 1000);
 	}
 	
 	@Override

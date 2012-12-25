@@ -15,6 +15,20 @@ public class Position {
         		return new Point(route[index*2], route[index*2 + 1]);
         	}
         	break;
+        case TYPE_PORT:
+        	if (index <= port.length/2){
+        		return new Point(port[index*2], port[index*2 + 1]);
+        	}
+        	break;
+        case TYPE_LANE:
+        	if (index <= lane.length/2){
+        		return new Point(lane[index*2], lane[index*2 + 1]);
+        	}
+        	break;
+        case TYPE_START:
+        	if (index <= start.length/2){
+        		return new Point(start[index*2], start[index*2 + 1]);
+        	}
         default:
             break;		
         }
@@ -26,24 +40,25 @@ public class Position {
     	249, 690,
     	249, 641,
     	268, 585,
-    	238, 544, //id: 5
-    	174, 570,
+    	238, 544, 
+    	174, 570, //id: 5
     	125, 570,
-    	70,  522,
+    	70,  552,
     	51,  500,
-    	51,  452, //id: 10
-    	51,  405,
+    	51,  452, 
+    	51,  405, //id: 10
     	51,  357,
     	51,  310,
     	68,  258,
-    	125, 237, //id: 15
-    	174, 237,
+    	125, 237, 
+    	174, 237, //id: 15
     	237, 260,
     	268, 221,
     	248, 166,
-    	248, 118, //id: 20
-    	268, 63,
+    	248, 118, 
+    	268, 63,  //id: 20
     	323, 47,
+    	372, 47,
     	421, 47,
     	471, 47,
     	520, 47,  //id: 25
@@ -122,7 +137,7 @@ public class Position {
     	699, 60, //id_party: 2
     	699, 139,
     	780, 60,
-    	699, 139,
+    	780, 139,
     	
     	780, 670, //id_party: 3
     	699, 670,
