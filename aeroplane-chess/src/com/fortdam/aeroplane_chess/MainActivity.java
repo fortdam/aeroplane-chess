@@ -1,5 +1,7 @@
 package com.fortdam.aeroplane_chess;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
@@ -151,7 +153,8 @@ class UIElement {
 }
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity 
+	implements DecisionMaker{
 	
 	private static final String debug="Aeroplane";
 		
@@ -223,6 +226,11 @@ public class MainActivity extends Activity {
 					public void onAnimationStart(Animation anim){}
 			
 		});
+	}
+	
+	@Override
+	public void decide(ArrayList <Action> actions){
+		
 	}
 	
 	@Override
