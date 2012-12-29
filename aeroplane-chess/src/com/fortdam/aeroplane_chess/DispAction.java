@@ -2,69 +2,102 @@ package com.fortdam.aeroplane_chess;
 
 import java.util.ArrayList;
 
-class DispMove{
-	public int type;
-	public int cellId;
-	
-	DispMove(int type, int cellId){
-		this.type = type;
-		this.cellId = cellId;
-	}
+interface Printable {
+	void print(DispAction action);	
+	boolean isInSync();
+}
+
+class DispMovement{
+	public int chessIndex;
+	public int cellType;
+	public int cellIndex;
 }
 
 public class DispAction {
-	public static final int DICE_ROLL = 1;
-	public static final int PLANE_MOVE = 2;
+	public static final int ACTION_DICE_ROLL = 1;
+	public static final int ACTION_MOVE = 2;
+	public static final int ACTION_SYNC = 3;
 	
-	private int type;
+	public static final int CELL_AIRPORT = 1;
+	public static final int CELL_START_POINT = 2;
+	public static final int CELL_ROUTE = 3;
+	public static final int CELL_LANE = 4;
+	
+	private int actionType;
+	
+	//For ACTION_DICE_ROLL
 	private int diceNumber;
-	private ArrayList<DispMove> moves;
 	
-	private int playerId;
-	private int planeId;
+	//For ACTION_MOVE or ACTION_SYNC
+	private int chessIndex;
+	private ArrayList<DispMovement> actions;
+	private int enumerator;
 	
-	DispAction(int action, int player, int num){
-		type = action;
-		playerId = player;
+	public static DispAction createSyncAction(){
+		DispAction inst = new DispAction();
+		inst.actionType = ACTION_SYNC;
+		inst.actions = new ArrayList<DispMovement>();
+	}
+	
+	public static DispAction createDiceRollAction(int num){
+		DispAction inst = new DispAction();
+		inst.actionType = ACTION_DICE_ROLL;
+		inst.diceNumber = num;
+	}
+	
+	public static DispAction createMoveAction(){
+		DispAction inst = new DispAction();
+		inst.actionType = ACTION_MOVE;
+		inst.actions = new ArrayList<DispMovement>();
+	}
+	
+	public void addMove(int cellType, int cellIndex){
+		 DispMovement move = new DispMovement();
+		 move.chessIndex = this.chessIndex;
+		 move.cellType = cellType;
+		 move.cellIndex = cellId;
+		 actions.add(move);
+	}
+	
+	public void addMove(int chessIndex, int cellType, int cellIndex){
+		if (actionType == ACTION_MOVE){
+			this.chessIndex = chessIndex;
+		}
 		
-		if (type == DICE_ROLL){
-			diceNumber = num;
-		}
-		else {
-			planeId = num;
-			moves = new ArrayList<DispMove>();
-		}
+		DispMovement move = new DispMovement();
+		move.chessIndex = chessIndex;
+		move.cellType = cellType;
+		move.cellIndex = cellId;
+		actions.add(move);		
 	}
 	
-	public void addMove(int type, int cellId){
-		moves.add(new DispMove(type, cellId));
-	}
-
-	public int getType(){
-		return type;
+	public int getActionType(){
+		return actionType;
 	}
 	
 	public int getDiceNumber(){
 		return diceNumber;
 	}
 	
-	public int getChessId(){
-		return (playerId*4 + planeId);
+	public int getMoveNumber(){
+		return actions.size();
 	}
 	
-	public int getMoveActionNum(){
-		return moves.size();
+	public DispMovement getMove(int index){
+		return actions.get(index);
 	}
 	
-	public DispMove getMoveAction(int index){
-		return moves.get(index);
+	public DispMovement getFirstMove(){
+		enumerator = 0;
+		return actions.get(enumerator++);
 	}
 	
-	public staic int getCellType(int type){
-		switch (type){
-		case Plane.PARKING:
-			
+	public DispMovement getNextMove(){
+		if(enumerator < actions.size()){
+			return actions.get(enumerator++);
 		}
-		
+		else{
+			return null;
+		}
 	}
 }

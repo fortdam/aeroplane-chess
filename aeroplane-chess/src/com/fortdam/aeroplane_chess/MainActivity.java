@@ -233,6 +233,10 @@ public class MainActivity extends Activity
 		
 	}
 	
+	@public void print(){
+		
+	}
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
