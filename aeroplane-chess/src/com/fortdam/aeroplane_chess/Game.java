@@ -142,20 +142,13 @@ class PlayerRule {
 	private int playerId;
 }
 
-class Action{	
-	public static final int TAKE_OFF = -1;
-	
-	public int playerId;
-	public int chessId;
-	public int step;
-}
 
 interface DecisionTaker{
-	void move(Action action);
+	void move(UserAction action);
 }
 
 interface DecisionMaker{
-	void decide (ArrayList <Action> actions, DecisionTaker callback, Game game);
+	void decide (ArrayList <UserAction> actions, DecisionTaker callback, Game game);
 }
 
 
@@ -164,20 +157,7 @@ interface Printable {
 	void refresh(String json);
 }
 
-class Chess{
-	public static final int PARKING = 0;
-	public static final int LAUNCHING = 1;
-	public static final int MOVING = 2;
-	public static final int LANDING = 3;
-	public static final int COMPLETE = 4;
-	 
-	Chess (int cellId){
-		state = PARKING;
-		place = cellId;
-	}
-	public int state;
-	public int place; //Expressed by cell ID
-}
+
 
 class Player{
 	public int playerId;
