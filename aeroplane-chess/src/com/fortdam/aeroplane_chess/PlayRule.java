@@ -38,7 +38,7 @@ public class PlayRule {
 	}
 	
 	public int getShortcut(int cellId){
-		int[] shortcuts;
+		int[] shortcuts = {};
 		
 		switch (playerId){
 		case 0:

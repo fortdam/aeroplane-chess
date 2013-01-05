@@ -26,6 +26,7 @@ public class DispAction {
 	private int actionType;
 	
 	//For ACTION_DICE_ROLL
+	private int playerIndex;
 	private int diceNumber;
 	
 	//For ACTION_MOVE or ACTION_SYNC
@@ -37,25 +38,29 @@ public class DispAction {
 		DispAction inst = new DispAction();
 		inst.actionType = ACTION_SYNC;
 		inst.actions = new ArrayList<DispMovement>();
+		return inst;
 	}
 	
-	public static DispAction createDiceRollAction(int num){
+	public static DispAction createDiceRollAction(int num, int player){
 		DispAction inst = new DispAction();
 		inst.actionType = ACTION_DICE_ROLL;
 		inst.diceNumber = num;
+		inst.playerIndex = player;
+		return inst;
 	}
 	
 	public static DispAction createMoveAction(){
 		DispAction inst = new DispAction();
 		inst.actionType = ACTION_MOVE;
 		inst.actions = new ArrayList<DispMovement>();
+		return inst;
 	}
 	
 	public void addMove(int cellType, int cellIndex){
 		 DispMovement move = new DispMovement();
 		 move.chessIndex = this.chessIndex;
 		 move.cellType = cellType;
-		 move.cellIndex = cellId;
+		 move.cellIndex = cellIndex;
 		 actions.add(move);
 	}
 	
@@ -67,7 +72,7 @@ public class DispAction {
 		DispMovement move = new DispMovement();
 		move.chessIndex = chessIndex;
 		move.cellType = cellType;
-		move.cellIndex = cellId;
+		move.cellIndex = cellIndex;
 		actions.add(move);		
 	}
 	

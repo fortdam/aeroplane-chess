@@ -3,14 +3,6 @@ package com.fortdam.aeroplane_chess;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-
-
-
-
-
 class Dice {
 	private Random generator;
 	Dice (){
@@ -21,75 +13,74 @@ class Dice {
 	}
 }
 
-
-
 public class Game 
-	implements DecisionTaker{
+	implements Player.ActionListener{
 	
-    Game (Printable target){
-    	printer = target;
-    	currPlayerId = 0;
+    private Game (Printable target){
+    	board = target;
+    	dice = new Dice();
     }
     
-    public void addPlayer (DecisionMaker client){
-    	players.add(new Player(players.size(), client));
-    }
+    static private Game instance = null;
     
-    public void removePlayer (DecisionMaker player) {
-    	
-    }
-    
-    private Printable printer;
-    private ArrayList <Player> players;
-    
-    private Player getPlayer(int id){
-    	for (int i=0; i<players.size(); i++){
-    		if (players.get(i).playerId == id){
-    			return players.get(i);
-    		}
+    public static Game createGameInstance(Printable target){
+    	if (instance == null){
+    		instance = new Game(target);
     	}
-    	return null;
+    	return instance;
     }
     
-    private ArrayList<Chess> findChessByPosition(int id){
-    	ArrayList <Chess> result = new ArrayList<Chess>();
+    public static Game getGameInstance(){
+    	return instance;
+    }
+    
+    public int addPlayer(){
+    	players.add(new Player(players.size(), board));
+    	return players.size();
+    }
+    
+    public int addPlayer(DecisionMaker client){
+    	int index = addPlayer();
+    	players.get(index).setDecisionMaker(client);
+    	return index;
+    }
+    
+    public void done(){
+    	currPlayerId++;
+    	if (currPlayerId == players.size()){
+    		currPlayerId = 0;
+    	}
+    	next();
+    }
+    
+    public void next(){
+    	int diceNumber = dice.roll();
+    	Player currPlayer = players.get(currPlayerId);
     	
+    	board.print(DispAction.createDiceRollAction(diceNumber, currPlayerId));
+    	currPlayer.activate(diceNumber, this);
+    }
+    
+    public void startGame(){
+    	currPlayerId = 0;
+
     	for (int i=0; i<players.size(); i++){
     		Player player = players.get(i);
     		
-    		for (int j=0; j<player.chesses.length; j++){
-    			Chess chess = player.chesses[i];
-    			if (chess.type == Chess.MOVING && chess.place == id){
-    				result.add(chess);
-    			}
+    		for (int j=0; j<player.getPlaneNum(); j++){
+    			Plane plane = player.getPlane(j);
+    			plane.display(board);
     		}
     	}
     	
-    	return result;
+    	next();
     }
     
-    @Override
-    public void move(Action action) {
-    	JSONObject json = new JSONObject();
-    			
-    	//Update the current/impact player status
-    	if (action.playerId != currPlayerId){
-    		//To throw an exception
-    	}
-    	
-    	Chess myChess = getPlayer(action.playerId).getChess(action.chessId);
-    	
-    	if (action.step == action.TAKE_OFF){
-    		myChess.state = Chess.LAUNCHING;
-
-    	}
-    	else {
-    		//Normal move
-    	}
-    	//Update the status to the printable 
-    	
-    	//Call next player
-    }
+    
+    
+    private Printable board;
+    private ArrayList <Player> players;
+    private Dice dice;
     
     private int currPlayerId;
 }

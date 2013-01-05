@@ -30,6 +30,31 @@ public class Plane {
 
     }
     
+    public void display(Printable target){
+    	DispAction action = DispAction.createSyncAction();
+    	switch(state){
+    	case STATE_PARKING:
+    		action.addMove(toIndex(), DispAction.CELL_AIRPORT, toIndex());
+    		break;
+    	case STATE_STARTING:
+    		action.addMove(toIndex(), DispAction.CELL_START_POINT, ownerId);
+    		break;
+    	case STATE_MOVING:
+    		action.addMove(toIndex(), DispAction.CELL_ROUTE, position);
+    		break;
+    	case STATE_LANDING:
+    		action.addMove(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength() + position);
+    		break;
+    	case STATE_COMPLETE:
+    		action.addMove(toIndex(), DispAction.CELL_AIRPORT, toIndex());
+    		break;
+    	default:
+    		return;
+    	}
+    	target.print(action);
+    	return;
+    }
+    
     public void move(int step, Printable target){
     	int landDir = 1;
     	DispAction action = DispAction.createMoveAction();
@@ -54,7 +79,7 @@ public class Plane {
     		}
     		else if (state == STATE_LANDING){
     			if (landDir == 1){
-    				positiion++;
+    				position++;
     				
     				if(position == PlayRule.getLandLength()-1){
     					landDir = -1;
@@ -105,6 +130,15 @@ public class Plane {
     	}
     }
     
+    public int getLaneCellIndex(){
+    	if (state == STATE_LANDING){
+    		return position;
+    	}
+    	else{
+    		return -1;
+    	}
+    }
+    
     public boolean isReadyComplete(){
     	return (state==STATE_LANDING && position==PlayRule.getLandLength()-1);
     }
@@ -115,6 +149,10 @@ public class Plane {
     
     public int getState(){
     	return state;
+    }
+    
+    public int getId(){
+    	return id;
     }
     
 	private int ownerId;

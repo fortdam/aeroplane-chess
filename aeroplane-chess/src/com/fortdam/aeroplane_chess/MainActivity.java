@@ -1,12 +1,17 @@
 package com.fortdam.aeroplane_chess;
 
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -19,16 +24,94 @@ import android.widget.ImageView;
 
 import com.fortdam.aeroplane_chess.ui.Position;
 
-class UIElement {
-	
+class DiceElement {
 	public static Context context = null;
 	public static float dispRatio = 999; //Just put an invalid number
 	
-	interface AnimationEventHandler {
-		public void animEnd();
+	private ImageView view;
+	private static final int UPDATE_PERIOD = 100;
+	private int frame = 0;
+	private int rollTime = 1500; //in ms
+	
+	private int[][] imageMatrix = {
+			{R.drawable.blue0, R.drawable.blue1, R.drawable.blue2, R.drawable.blue3, R.drawable.blue4, R.drawable.blue5, R.drawable.blue6},
+			{R.drawable.green0, R.drawable.green1, R.drawable.green2, R.drawable.green3, R.drawable.green4, R.drawable.green5, R.drawable.green6},
+			{R.drawable.red0, R.drawable.red1, R.drawable.red2, R.drawable.red3, R.drawable.red4, R.drawable.red5, R.drawable.red6},
+			{R.drawable.yellow0, R.drawable.yellow1, R.drawable.yellow2, R.drawable.yellow3, R.drawable.yellow4, R.drawable.yellow5, R.drawable.yellow6}
+	};
+	
+	
+	public void bind(ImageView diceView){
+		view = diceView;
+		
+		//Set the proportion of the image.
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = true;
+		BitmapFactory.decodeResource(context.getResources(), imageMatrix[0][0], options);
+		
+		view.setAdjustViewBounds(true);
+		view.setMaxWidth((int)(options.outWidth * dispRatio));
+		view.setMaxHeight((int)(options.outHeight * dispRatio));
 	}
+	
+	public void setRollTime(int period){
+		rollTime = period;
+	}
+	
+	public void setWait(int colorIndex){
+		view.setImageResource(imageMatrix[colorIndex][0]);
+	}
+	
+	public void roll(final int colorIndex, final int num, final Animation.AnimationListener handler){
 
-	UIElement (int resId) throws Exception{
+		final int frames = this.rollTime/this.UPDATE_PERIOD;
+		final Timer timer = new Timer();
+		final Handler messageHandler = new Handler(){
+			@Override
+			public void handleMessage(Message msg){
+				if (msg.what == 1){
+					view.setImageResource(imageMatrix[msg.arg1][msg.arg2]);
+				}
+				else{
+					timer.cancel();
+					if (handler != null){
+						handler.onAnimationEnd(null);
+					}
+				}
+			}
+		};
+		
+		timer.scheduleAtFixedRate(
+				new TimerTask(){
+					private int remain = frames;
+					
+					@Override
+					public void run(){
+						
+						if (remain > 0){
+							Random rand = new Random();
+							int num = rand.nextInt(6)+1;
+							
+							messageHandler.obtainMessage(1,colorIndex,num).sendToTarget();
+						}
+						else{
+							messageHandler.obtainMessage(2).sendToTarget();
+						}
+						
+						remain--;						
+					}
+				}
+				, UPDATE_PERIOD, UPDATE_PERIOD);
+	}
+}
+
+class ChessElement {
+	
+	public static Context context = null;
+	public static float dispRatio = 999; //Just put an invalid number
+
+	
+	ChessElement (int resId) throws Exception{
 		if (null == context){
 			throw new Exception("The context of UIElement is not initialized");
 		}
@@ -57,6 +140,7 @@ class UIElement {
 
 		Log.i("Aeroplane", "Create a new element "+icon+" size ["+width+","+height+"]");
 	}
+	
 	
 	public void move(Point pt, final Animation.AnimationListener handler){
 		//Play animation;
@@ -116,7 +200,7 @@ class UIElement {
 		Log.i("Aeroplane", "Move the element to:" +x+","+y);
 	}
 	
-	public void insert(ViewGroup parent, Point pt) throws Exception{
+	public void setPosition(ViewGroup parent, Point pt) throws Exception{
 		x = (int)(pt.x * dispRatio);
 		y = (int)(pt.y * dispRatio);
 		
@@ -153,12 +237,13 @@ class UIElement {
 }
 
 
-public class MainActivity extends Activity 
-	implements DecisionMaker{
+public class MainActivity extends Activity {
 	
 	private static final String debug="Aeroplane";
 		
-	private UIElement[] items = {null};
+	private ChessElement[] items = {null};
+	private ArrayList<DispAction> actionQueue;
+	private DispAction currentAction;
 	private float dispRatio = 100;
 	private float startX = 0;
 	private float startY = 0;
@@ -175,26 +260,55 @@ public class MainActivity extends Activity
 		BitmapFactory.decodeResource(getResources(), R.drawable.map, options);
 
 		dispRatio = (float)map.getWidth() / (float)options.outWidth;
-		UIElement.dispRatio = dispRatio;
-		Log.i("Aeroplane", "The disp Ratio is:"+dispRatio);
+		ChessElement.dispRatio = dispRatio;
+		DiceElement.dispRatio = dispRatio;
+		Log.v("Aeroplane", "The disp Ratio is:"+dispRatio);
 	}
 	
-	public void startTest(View view){
+	private void processAction(){
+		if (actionQueue.size() > 0){
+			currentAction = actionQueue.get(0);
+			actionQueue.remove(0);
+			
+			switch(currentAction.getActionType()){
+			case DispAction.ACTION_DICE_ROLL:
+				break;
+			case DispAction.ACTION_SYNC:
+				
+				break;
+			case DispAction.ACTION_MOVE:
+				break;
+			}
+		}
+	}
+	
+	public void testDice(View view){
+		Context context = getApplicationContext();
+		setDispProperties();
+		
+		
+		
+		DiceElement dice = new DiceElement();
+		dice.bind((ImageView)findViewById(R.id.diceView));
+		dice.roll(0, 5, null);
+	}
+	
+	public void testChess(View view){
 		Context context = getApplicationContext();
 		setDispProperties();
 		
 		Point begin = Position.getRouteCord(Position.TYPE_ROUTE, 0);
 		
 		try {
-			items[0] = new UIElement(R.drawable.blue);
+			items[0] = new ChessElement(R.drawable.blue);
 			ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
-			items[0].insert(holder, begin);
+			items[0].setPosition(holder, begin);
 		}
 		catch (Exception e){
 			e.printStackTrace();
 		}
 		
-		final UIElement movingItem = items[0];
+		final ChessElement movingItem = items[0];
 		
 		movingItem.move(Position.getRouteCord(Position.TYPE_ROUTE, 1), 
 				new Animation.AnimationListener() {
@@ -229,20 +343,13 @@ public class MainActivity extends Activity
 	}
 	
 	@Override
-	public void decide(ArrayList <Action> actions){
-		
-	}
-	
-	@public void print(){
-		
-	}
-	
-	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);		
 		
-		UIElement.context = getApplicationContext();
+		actionQueue = new ArrayList<DispAction>();
+		ChessElement.context = getApplicationContext();
+		DiceElement.context = ChessElement.context;
 	}
 
 	
@@ -252,5 +359,4 @@ public class MainActivity extends Activity
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
 	}
-
 }
