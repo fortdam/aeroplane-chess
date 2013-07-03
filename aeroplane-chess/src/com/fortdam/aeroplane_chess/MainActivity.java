@@ -141,18 +141,21 @@ class ChessElement {
 		Log.i("Aeroplane", "Create a new element "+icon+" size ["+width+","+height+"]");
 	}
 	
+  public void setClickListener(View.OnClickListener listener){
+	  item.setOnClickListener(listener);
+  }
 	
 	public void move(Point pt, final Animation.AnimationListener handler){
 		//Play animation;
-		pt.x = (int)(pt.x * dispRatio);
-		pt.y = (int)(pt.y * dispRatio);
+		final int xEnd= (int)(pt.x * dispRatio);
+		final int yEnd = (int)(pt.y * dispRatio);
 		
 		AnimationSet anim = new AnimationSet(false);
-		TranslateAnimation trans = new TranslateAnimation(
+		TranslateAnimation trans =  new TranslateAnimation (
 				TranslateAnimation.ABSOLUTE, 0,
-				TranslateAnimation.ABSOLUTE, pt.x - x,
+				TranslateAnimation.ABSOLUTE, xEnd - x,
 				TranslateAnimation.ABSOLUTE, 0,
-				TranslateAnimation.ABSOLUTE, pt.y - y);
+				TranslateAnimation.ABSOLUTE, yEnd - y);
 		
 		trans.setDuration(500);
 		anim.addAnimation(trans);
@@ -163,16 +166,17 @@ class ChessElement {
 					@Override
 					public void onAnimationEnd(Animation anim){
 						ViewGroup parent = (ViewGroup)item.getParent();
+						item.clearAnimation();
 						parent.updateViewLayout(item, 
 								new AbsoluteLayout.LayoutParams(
 										ViewGroup.LayoutParams.WRAP_CONTENT, 
 										ViewGroup.LayoutParams.WRAP_CONTENT, 
-										x - width/2, y - height/2));
+										x - width/2, y -height/2)); 
 				
 						if (handler != null){
 							handler.onAnimationEnd(anim);
 						}
-						Log.i("Aeroplane", "Animation end");
+						Log.i("Aeroplane", "Animation end, x="+x+" y="+y+" width="+width+" height="+height);
 					}
 			
 					@Override
@@ -195,8 +199,8 @@ class ChessElement {
 		item.startAnimation(anim);
 		
 		//Update the current position
-		x = pt.x;
-		y = pt.y;
+		x = xEnd;
+		y = yEnd;
 		Log.i("Aeroplane", "Move the element to:" +x+","+y);
 	}
 	
@@ -237,16 +241,26 @@ class ChessElement {
 }
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity 
+  implements Printable{
 	
 	private static final String debug="Aeroplane";
 		
-	private ChessElement[] items = {null};
+	private ArrayList<ChessElement> items = new ArrayList<ChessElement>();
+	private DiceElement dice = null;
 	private ArrayList<DispAction> actionQueue;
 	private DispAction currentAction;
 	private float dispRatio = 100;
 	private float startX = 0;
 	private float startY = 0;
+	
+	public void print(DispAction action){
+		actionQueue.add(action);
+	}
+	
+	public boolean isInSync(){
+		return actionQueue.isEmpty();
+	}
 	
 	
 	private void setDispProperties(){
@@ -266,17 +280,90 @@ public class MainActivity extends Activity {
 	}
 	
 	private void processAction(){
+		ChessElement item;
+		
 		if (actionQueue.size() > 0){
 			currentAction = actionQueue.get(0);
 			actionQueue.remove(0);
 			
-			switch(currentAction.getActionType()){
+			switch(currentAction.actionType){
 			case DispAction.ACTION_DICE_ROLL:
+				if (dice == null){
+					dice = new DiceElement();
+					dice.bind((ImageView)findViewById(R.id.diceView));
+				}
+				dice.roll(currentAction.playerIndex, currentAction.diceNumber, 
+						new Animation.AnimationListener() {
+							
+							@Override
+							public void onAnimationStart(Animation animation) {
+								// TODO Auto-generated method stub
+								processAction();
+							}
+							
+							@Override
+							public void onAnimationRepeat(Animation animation) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public void onAnimationEnd(Animation animation) {
+								// TODO Auto-generated method stub
+								
+							}
+						});
 				break;
 			case DispAction.ACTION_SYNC:
+				try{
+				while (items.size() <= currentAction.chessIndex){
+					if (items.size() < 4){
+					  items.add(new ChessElement(R.drawable.blue));
+					}
+					else if (items.size() < 8){
+						items.add(new ChessElement(R.drawable.green));
+					}
+					else if (items.size() < 12){
+						items.add(new ChessElement(R.drawable.red));
+					}
+					else {
+						items.add(new ChessElement(R.drawable.yellow));
+					}
+					
+				}
+					
+				item = items.get(currentAction.chessIndex);
 				
+					ViewGroup parent = (ViewGroup)findViewById(R.id.layout);
+					item.setPosition(parent, Position.getRouteCord(currentAction.cellType, currentAction.cellIndex));			
+				}
+				catch(Exception e){
+					e.printStackTrace();
+				}
+				processAction();
 				break;
 			case DispAction.ACTION_MOVE:
+				item = items.get(currentAction.chessIndex);
+				item.move(Position.getRouteCord(currentAction.cellType, currentAction.cellIndex), new Animation.AnimationListener() {
+					
+					@Override
+					public void onAnimationStart(Animation animation) {
+						// TODO Auto-generated method stub
+						processAction();
+					}
+					
+					@Override
+					public void onAnimationRepeat(Animation animation) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void onAnimationEnd(Animation animation) {
+						// TODO Auto-generated method stub
+						
+					}
+				});
 				break;
 			}
 		}
@@ -300,15 +387,15 @@ public class MainActivity extends Activity {
 		Point begin = Position.getRouteCord(Position.TYPE_ROUTE, 0);
 		
 		try {
-			items[0] = new ChessElement(R.drawable.blue);
+			items.add(new ChessElement(R.drawable.blue));
 			ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
-			items[0].setPosition(holder, begin);
+			items.get(0).setPosition(holder, begin);
 		}
 		catch (Exception e){
 			e.printStackTrace();
 		}
 		
-		final ChessElement movingItem = items[0];
+		final ChessElement movingItem = items.get(0);
 		
 		movingItem.move(Position.getRouteCord(Position.TYPE_ROUTE, 1), 
 				new Animation.AnimationListener() {
@@ -341,6 +428,58 @@ public class MainActivity extends Activity {
 			
 		});
 	}
+	
+  
+	public void testChessOnClick(View view){
+		Context context = getApplicationContext();
+		setDispProperties();
+		
+		Point begin = Position.getRouteCord(Position.TYPE_ROUTE, 0);
+		
+		try {
+			items.add(new ChessElement(R.drawable.blue));
+			ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
+			items.get(0).setPosition(holder, begin);
+		}
+		catch (Exception e){
+			e.printStackTrace();
+		}
+		
+		final ChessElement movingItem = items.get(0);
+
+        movingItem.setClickListener(new View.OnClickListener() {
+			private int index = 0;
+			@Override
+			public void onClick(View v) {
+				
+				Log.i("Aeroplane", "click received, move to "+(index+1));
+				try{
+				  //ViewGroup holder = (ViewGroup)findViewById(R.id.layout);
+				  //items[0].setPosition(holder, Position.getRouteCord(Position.TYPE_ROUTE, ++index));
+				  movingItem.move(Position.getRouteCord(Position.TYPE_ROUTE, ++index), null);
+				}
+				catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public void testGame(View view){
+		Context context = getApplicationContext();
+		setDispProperties();
+		
+		Game testGame = Game.createGameInstance(this);
+		testGame.addPlayer();
+		testGame.addPlayer();
+		testGame.addPlayer();
+		testGame.addPlayer();
+		testGame.startGame();
+		
+		processAction();
+		
+	}
+
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

@@ -22,8 +22,8 @@ public class Plane {
     public void start(Printable target){
     	start();
     	
-    	DispAction action = DispAction.createMoveAction();
-    	action.addMove(toIndex(), DispAction.CELL_START_POINT, ownerId);
+    	DispAction action = DispAction.createMoveAction(toIndex(), DispAction.CELL_START_POINT, ownerId);
+    	target.print(action);
     }
     
     public void move(int step){
@@ -31,22 +31,22 @@ public class Plane {
     }
     
     public void display(Printable target){
-    	DispAction action = DispAction.createSyncAction();
+    	DispAction action;
     	switch(state){
     	case STATE_PARKING:
-    		action.addMove(toIndex(), DispAction.CELL_AIRPORT, toIndex());
+    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_AIRPORT, toIndex());
     		break;
     	case STATE_STARTING:
-    		action.addMove(toIndex(), DispAction.CELL_START_POINT, ownerId);
+    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_START_POINT, ownerId);
     		break;
     	case STATE_MOVING:
-    		action.addMove(toIndex(), DispAction.CELL_ROUTE, position);
+    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_ROUTE, position);
     		break;
     	case STATE_LANDING:
-    		action.addMove(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength() + position);
+    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength() + position);
     		break;
     	case STATE_COMPLETE:
-    		action.addMove(toIndex(), DispAction.CELL_AIRPORT, toIndex());
+    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_AIRPORT, toIndex());
     		break;
     	default:
     		return;
@@ -57,24 +57,24 @@ public class Plane {
     
     public void move(int step, Printable target){
     	int landDir = 1;
-    	DispAction action = DispAction.createMoveAction();
+
     	PlayRule  rule = new PlayRule(ownerId);
     	
     	while (step-- > 0){
     		if (state == STATE_STARTING){
     			state = STATE_MOVING;
     			position = rule.getStartCell();
-    			action.addMove(toIndex(), DispAction.CELL_ROUTE, position);
+    			target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_ROUTE, position));
     		}
     	    else if (state == STATE_MOVING){
     			if (rule.getLandCell() == position){
     				state = STATE_LANDING;
     				position = 0;
-    				action.addMove(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength());
+    				target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength()));
     			}
     			else{
     				position++;
-    				action.addMove(toIndex(), DispAction.CELL_ROUTE, position);
+    				target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_ROUTE, position));
     			}
     		}
     		else if (state == STATE_LANDING){
@@ -89,13 +89,13 @@ public class Plane {
     				//Backward direction
     				position--;						
     			}
-    			action.addMove(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength() + position);
+    			target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength() + position));
     		}
     	}    
     	
     	if (state == STATE_MOVING && rule.getShortcut(position) > 0){
     		position = rule.getShortcut(position);
-    		action.addMove(toIndex(), DispAction.CELL_ROUTE, position);
+    		target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_ROUTE, position));
     	}
     }
     
@@ -106,8 +106,7 @@ public class Plane {
     public void shoot(Printable target){
     	shoot();
     	
-    	DispAction action = DispAction.createMoveAction();
-    	action.addMove(toIndex(), DispAction.CELL_AIRPORT, ownerId);
+    	target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_AIRPORT, ownerId));
     }
     
     public void complete(){
@@ -117,8 +116,7 @@ public class Plane {
     public void complete(Printable target){
     	complete();
     	
-    	DispAction action = DispAction.createMoveAction();
-    	action.addMove(toIndex(), DispAction.CELL_AIRPORT, ownerId);
+    	target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_AIRPORT, ownerId));
     }
     
     public int getRouteCellIndex() {

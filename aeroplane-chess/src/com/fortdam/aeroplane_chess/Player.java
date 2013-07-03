@@ -16,7 +16,7 @@ public class Player {
 		this.id = id;
 		
 		for (int i=0; i<4; i++){
-			planes[i] = new Plane(id, i);
+			planes.add(new Plane(id, i));
 		}
 		enumerator = 0;
 		board = printer;
@@ -62,16 +62,16 @@ public class Player {
 	public ArrayList<Plane> getPossibleActions(int dice){
 		ArrayList<Plane> list = new ArrayList<Plane>();
 		
-		for (int i=0; i<planes.length; i++){
-			switch(planes[i].getState()){
+		for (int i=0; i<planes.size(); i++){
+			switch(planes.get(i).getState()){
 			case Plane.STATE_STARTING:
 			case Plane.STATE_MOVING:
 			case Plane.STATE_LANDING:
-				list.add(planes[i]);
+				list.add(planes.get(i));
 				break;
 			case Plane.STATE_PARKING:
 				if (dice == 6){
-					list.add(planes[i]);
+					list.add(planes.get(i));
 				}
 			default:
 				break;
@@ -120,16 +120,16 @@ public class Player {
     public void actOnDice(int number){
     	ArrayList<Plane> possibleActions = new ArrayList<Plane>();
     	
-    	for (int i=0; i<planes.length; i++){
-    		switch (planes[i].getState()){
+    	for (int i=0; i<planes.size(); i++){
+    		switch (planes.get(i).getState()){
     		case Plane.STATE_STARTING:
     		case Plane.STATE_MOVING:
     		case Plane.STATE_LANDING:
-    			possibleActions.add(planes[i]);
+    			possibleActions.add(planes.get(i));
     			break;
     		case Plane.STATE_PARKING:
     			if (number == 6){
-    				possibleActions.add(planes[i]);
+    				possibleActions.add(planes.get(i));
     			}
     			break;
     		default:
@@ -140,15 +140,16 @@ public class Player {
     }
 	
 	public int getPlaneNum(){
-		return planes.length;
+		return planes.size();
 	}
 	
 	public Plane getPlane(int index){
-		return planes[index];
+		return planes.get(index);
+		
 	}
 	
 	public Plane getFirstPlane(){
-		return planes[0];
+		return planes.get(0);
 	}
 	
 	public Plane getNextPlane(){
@@ -156,11 +157,11 @@ public class Player {
 			return null;
 		}
 		else{
-			return planes[enumerator++];
+			return planes.get(enumerator++);
 		}
 	}
 	
-	private Plane[] planes;
+	private ArrayList<Plane> planes = new ArrayList<Plane>();
 	private int id;
 	
 	private int enumerator;

@@ -79,7 +79,7 @@ public class Game
     
     
     private Printable board;
-    private ArrayList <Player> players;
+    private ArrayList<Player> players = new ArrayList<Player>();
     private Dice dice;
     
     private int currPlayerId;
