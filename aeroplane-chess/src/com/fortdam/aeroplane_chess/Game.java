@@ -17,6 +17,7 @@ public class Game
 	implements Player.ActionListener{
 	
 	private int round = 0;
+	private boolean redo = false;
 	
     private Game (Printable target){
     	board = target;
@@ -48,8 +49,14 @@ public class Game
     }
     
     public void done(){
-      board.print(DispAction.createRestAction());
-    	currPlayerId++;
+        board.print(DispAction.createRestAction());
+        if (redo){
+        	redo = false;
+        }
+        else{
+    	  currPlayerId++;
+        }
+        
     	if (currPlayerId == players.size()){
     		currPlayerId = 0;
     	}
@@ -62,7 +69,11 @@ public class Game
     	Player currPlayer = players.get(currPlayerId);
     	
     	board.print(DispAction.createDiceRollAction(diceNumber, currPlayerId));
+    	if (diceNumber == 6){
+    	  redo = true;
+    	}
     	currPlayer.activate(diceNumber, this);
+    	
     }
     
     public void startGame(){
@@ -80,7 +91,13 @@ public class Game
     	next();
     }
     
+    public int getPlayerNum(){
+    	return players.size();
+    }
     
+    public Player getPlayer(int i){
+    	return players.get(i);
+    }
     
     private Printable board;
     private ArrayList<Player> players = new ArrayList<Player>();

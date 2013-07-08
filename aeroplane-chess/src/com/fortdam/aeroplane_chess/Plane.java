@@ -75,6 +75,7 @@ public class Plane {
     			}
     			else{
     				position++;
+    				position %= rule.getRouteLength();
     				target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_ROUTE, ownerId, id, position)));
     			}
     		}
@@ -94,11 +95,32 @@ public class Plane {
     		}
     	}    
     	
-    	if (state == STATE_MOVING && rule.getShortcut(position) > 0){
+    	if (state == STATE_MOVING && rule.getShortcut(position) >= 0){
     		position = rule.getShortcut(position);
     		target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_ROUTE, ownerId, id, position)));
     	}
+    	else if (state == STATE_LANDING && position == PlayRule.getLandLength()-1){
+    		complete(target);
+    		return;
+    	}
     	
+    	//Shoot other's
+    	if (state == STATE_MOVING){
+    		Game currGame = Game.getGameInstance();
+    		
+    		for (int i=0; i<currGame.getPlayerNum(); i++){
+    			if (i == ownerId){
+    				continue;
+    			}
+    			    			
+    			for (int j=0; j<currGame.getPlayer(i).getPlaneNum(); j++){
+    				Plane plane = currGame.getPlayer(i).getPlane(j);
+    				if (plane.position == position && plane.state == STATE_MOVING){
+    					plane.shoot(target);
+    				}
+    			}
+    		}
+    	}
     	target.print(DispAction.createFixAction(toIndex()));
     }
     
