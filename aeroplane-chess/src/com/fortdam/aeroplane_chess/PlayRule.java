@@ -2,6 +2,10 @@ package com.fortdam.aeroplane_chess;
 
 public class PlayRule {
 	
+	final static public int LANE_LENGTH = 6;
+	final static public int PLANE_NUM = 4;
+	
+	
 	PlayRule(int playerId){
 		this.playerId = playerId;
 	}

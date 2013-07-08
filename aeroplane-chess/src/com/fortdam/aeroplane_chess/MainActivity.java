@@ -73,7 +73,8 @@ class DiceElement {
 					view.setImageResource(imageMatrix[msg.arg1][msg.arg2]);
 				}
 				else{
-					timer.cancel();
+					//timer.cancel();
+					view.setImageResource(imageMatrix[colorIndex][num]);
 					if (handler != null){
 						handler.onAnimationEnd(null);
 					}
@@ -95,6 +96,7 @@ class DiceElement {
 							messageHandler.obtainMessage(1,colorIndex,num).sendToTarget();
 						}
 						else{
+							timer.cancel();
 							messageHandler.obtainMessage(2).sendToTarget();
 						}
 						
@@ -242,7 +244,7 @@ class ChessElement {
 
 
 public class MainActivity extends Activity 
-  implements Printable{
+  implements Printable,DecisionMaker{
 	
 	private static final String debug="Aeroplane";
 		
@@ -253,9 +255,15 @@ public class MainActivity extends Activity
 	private float dispRatio = 100;
 	private float startX = 0;
 	private float startY = 0;
+	private boolean isProcessing = false;
+  private Game game;
 	
 	public void print(DispAction action){
 		actionQueue.add(action);
+		
+		if (!isProcessing){
+		  processAction();
+		}
 	}
 	
 	public boolean isInSync(){
@@ -279,14 +287,57 @@ public class MainActivity extends Activity
 		Log.v("Aeroplane", "The disp Ratio is:"+dispRatio);
 	}
 	
+	private Player currPlayer = null;
+	private int diceNumber;
+	
+	public void decide(Player player, int num){
+		currPlayer = player;
+		diceNumber = num;
+	}
+	
+	private void userClick(int index){
+		if (currPlayer != null){
+		  ArrayList<Plane> actions= currPlayer.getPossibleActions(diceNumber);
+		  
+		  for (int i=0; i<actions.size(); i++){
+			  Plane plane = actions.get(i);
+			  if (index == plane.toIndex()){
+				  Player player = currPlayer;
+				  currPlayer = null;
+				  player.takeAction(plane.getId());
+				  player.moveListener.done();
+				  return;
+			  }
+		  }
+		}
+	} 
+	
 	private void processAction(){
 		ChessElement item;
+		
+		isProcessing = true;
 		
 		if (actionQueue.size() > 0){
 			currentAction = actionQueue.get(0);
 			actionQueue.remove(0);
 			
 			switch(currentAction.actionType){
+			case DispAction.ACTION_REST:
+				final Timer timer = new Timer();
+        final Handler messageHandler = new Handler(){
+          public void handleMessage(Message msg){
+            timer.cancel();
+            processAction();
+          }
+        };
+
+        timer.schedule(new TimerTask() {
+            public void run() {
+              messageHandler.obtainMessage().sendToTarget();
+            }
+          }, 2000L);
+				
+				break;
 			case DispAction.ACTION_DICE_ROLL:
 				if (dice == null){
 					dice = new DiceElement();
@@ -298,7 +349,7 @@ public class MainActivity extends Activity
 							@Override
 							public void onAnimationStart(Animation animation) {
 								// TODO Auto-generated method stub
-								processAction();
+								
 							}
 							
 							@Override
@@ -310,7 +361,7 @@ public class MainActivity extends Activity
 							@Override
 							public void onAnimationEnd(Animation animation) {
 								// TODO Auto-generated method stub
-								
+								processAction();
 							}
 						});
 				break;
@@ -329,13 +380,21 @@ public class MainActivity extends Activity
 					else {
 						items.add(new ChessElement(R.drawable.yellow));
 					}
-					
+					ChessElement newItem = items.get(items.size()-1);
+					newItem.setClickListener(new View.OnClickListener() {
+						public int index = items.size()-1;
+						@Override
+						public void onClick(View v) {
+							// TODO Auto-generated method stub
+							userClick(index);
+						}
+					});
 				}
 					
 				item = items.get(currentAction.chessIndex);
 				
 					ViewGroup parent = (ViewGroup)findViewById(R.id.layout);
-					item.setPosition(parent, Position.getRouteCord(currentAction.cellType, currentAction.cellIndex));			
+					item.setPosition(parent, Position.getRouteCord(currentAction.pos.getType(), currentAction.pos.getIndex()));			
 				}
 				catch(Exception e){
 					e.printStackTrace();
@@ -344,12 +403,12 @@ public class MainActivity extends Activity
 				break;
 			case DispAction.ACTION_MOVE:
 				item = items.get(currentAction.chessIndex);
-				item.move(Position.getRouteCord(currentAction.cellType, currentAction.cellIndex), new Animation.AnimationListener() {
+				item.move(Position.getRouteCord(currentAction.pos.getType(), currentAction.pos.getIndex()), new Animation.AnimationListener() {
 					
 					@Override
 					public void onAnimationStart(Animation animation) {
 						// TODO Auto-generated method stub
-						processAction();
+						
 					}
 					
 					@Override
@@ -361,11 +420,14 @@ public class MainActivity extends Activity
 					@Override
 					public void onAnimationEnd(Animation animation) {
 						// TODO Auto-generated method stub
-						
+						processAction();
 					}
 				});
 				break;
 			}
+		}
+		else{
+			isProcessing = false;
 		}
 	}
 	
@@ -469,14 +531,14 @@ public class MainActivity extends Activity
 		Context context = getApplicationContext();
 		setDispProperties();
 		
-		Game testGame = Game.createGameInstance(this);
-		testGame.addPlayer();
-		testGame.addPlayer();
-		testGame.addPlayer();
-		testGame.addPlayer();
-		testGame.startGame();
+		game = Game.createGameInstance(this);
+		game.addPlayer(this);
+		game.addPlayer(this);
+		game.addPlayer(this);
+		game.addPlayer(this);
+		game.startGame();
 		
-		processAction();
+		//processAction();
 		
 	}
 

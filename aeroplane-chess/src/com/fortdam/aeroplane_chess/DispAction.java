@@ -11,11 +11,7 @@ public class DispAction {
 	public static final int ACTION_DICE_ROLL = 1;
 	public static final int ACTION_MOVE = 2;
 	public static final int ACTION_SYNC = 3;
-	
-	public static final int CELL_ROUTE = 1;
-	public static final int CELL_AIRPORT = 2;
-	public static final int CELL_LANE = 3;
-	public static final int CELL_START_POINT = 4;
+    public static final int ACTION_REST = 4;
 	
 	public int actionType;
 	
@@ -25,9 +21,13 @@ public class DispAction {
 	
 	//For ACTION_MOVE or ACTION_SYNC
 	public int chessIndex;
-	public int cellType;
-	public int cellIndex;
+	public Cell pos;
 	
+  public static DispAction createRestAction(){
+    DispAction inst = new DispAction();
+    inst.actionType = ACTION_REST;
+    return inst;
+  }
 	
 	public static DispAction createDiceRollAction(int num, int player){
 		DispAction inst = new DispAction();
@@ -37,21 +37,19 @@ public class DispAction {
 		return inst;
 	}
 	
-	public static DispAction createMoveAction(int aChessIndex, int aCellType, int aCellIndex){
+	public static DispAction createMoveAction(int aChessIndex, Cell dest){
 		DispAction inst = new DispAction();
 		inst.actionType = ACTION_MOVE;
 		inst.chessIndex = aChessIndex;
-		inst.cellType = aCellType;
-		inst.cellIndex = aCellIndex;
+		inst.pos = new Cell(dest);
 		return inst;
 	}
 	
-	public static DispAction createSyncAction(int aChessIndex, int aCellType, int aCellIndex){
+	public static DispAction createSyncAction(int aChessIndex, Cell dest){
 		DispAction inst = new DispAction();
 		inst.actionType = ACTION_SYNC;
 		inst.chessIndex = aChessIndex;
-		inst.cellType = aCellType;
-		inst.cellIndex = aCellIndex;
+		inst.pos = new Cell(dest);
 		return inst;
 	}
 }

@@ -28,6 +28,7 @@ public class Player {
 					Plane plane = actions.get(i);
 					if (plane.getState() == Plane.STATE_PARKING){
 						player.takeAction(plane.getId());
+            moveListener.done();
 						return;
 					}
 				}
@@ -37,6 +38,7 @@ public class Player {
 					if (plane.getState() == Plane.STATE_LANDING && 
 							plane.getLaneCellIndex()+dice == 5){
 						player.takeAction(plane.getId());
+            moveListener.done();
 						return;
 					}
 				}
@@ -45,11 +47,13 @@ public class Player {
 					Plane plane = actions.get(i);
 					if (plane.getState() == Plane.STATE_MOVING){
 						player.takeAction(plane.getId());
+            moveListener.done();
 						return;
 					}
 				}
 				
 				player.takeAction(actions.get(0).getId());
+        moveListener.done();
 				return;
 			}
 		};
@@ -109,7 +113,7 @@ public class Player {
 			listener.done();
 		}
 		else{
-			//Pass it to the AI
+			//Pass it to the AI / UI
 			diceNumber = dice;
 			moveListener = listener;
 			
@@ -136,7 +140,6 @@ public class Player {
     			break;
     		}
     	}
-    	
     }
 	
 	public int getPlaneNum(){
@@ -166,7 +169,7 @@ public class Player {
 	
 	private int enumerator;
 	private int diceNumber;
-	private ActionListener moveListener;
+	public ActionListener moveListener;
 	private Printable board;
 	private DecisionMaker decider;
 }

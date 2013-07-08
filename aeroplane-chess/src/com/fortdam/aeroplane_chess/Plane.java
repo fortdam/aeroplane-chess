@@ -22,8 +22,7 @@ public class Plane {
     public void start(Printable target){
     	start();
     	
-    	DispAction action = DispAction.createMoveAction(toIndex(), DispAction.CELL_START_POINT, ownerId);
-    	target.print(action);
+    	target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_START_POINT, ownerId)));
     }
     
     public void move(int step){
@@ -31,27 +30,27 @@ public class Plane {
     }
     
     public void display(Printable target){
-    	DispAction action;
+    	int type;
     	switch(state){
     	case STATE_PARKING:
-    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_AIRPORT, toIndex());
+    		type = Cell.TYPE_AIRPORT;
     		break;
     	case STATE_STARTING:
-    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_START_POINT, ownerId);
+    		type = Cell.TYPE_START_POINT;
     		break;
     	case STATE_MOVING:
-    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_ROUTE, position);
+    		type = Cell.TYPE_ROUTE;
     		break;
     	case STATE_LANDING:
-    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength() + position);
+    		type = Cell.TYPE_LANE;
     		break;
     	case STATE_COMPLETE:
-    		action = DispAction.createSyncAction(toIndex(), DispAction.CELL_AIRPORT, toIndex());
+    		type = Cell.TYPE_AIRPORT;
     		break;
     	default:
     		return;
     	}
-    	target.print(action);
+    	target.print(DispAction.createSyncAction(toIndex(), new Cell(type, ownerId, id, position)));
     	return;
     }
     
@@ -64,17 +63,17 @@ public class Plane {
     		if (state == STATE_STARTING){
     			state = STATE_MOVING;
     			position = rule.getStartCell();
-    			target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_ROUTE, position));
+    			target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_ROUTE, ownerId, id, position)));
     		}
     	    else if (state == STATE_MOVING){
     			if (rule.getLandCell() == position){
     				state = STATE_LANDING;
     				position = 0;
-    				target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength()));
+    				target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_LANE, ownerId, id, position)));
     			}
     			else{
     				position++;
-    				target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_ROUTE, position));
+    				target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_ROUTE, ownerId, id, position)));
     			}
     		}
     		else if (state == STATE_LANDING){
@@ -89,13 +88,13 @@ public class Plane {
     				//Backward direction
     				position--;						
     			}
-    			target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_LANE, ownerId * PlayRule.getLandLength() + position));
+    			target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_LANE, ownerId, id, position)));
     		}
     	}    
     	
     	if (state == STATE_MOVING && rule.getShortcut(position) > 0){
     		position = rule.getShortcut(position);
-    		target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_ROUTE, position));
+    		target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_ROUTE, ownerId, id, position)));
     	}
     }
     
@@ -106,7 +105,7 @@ public class Plane {
     public void shoot(Printable target){
     	shoot();
     	
-    	target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_AIRPORT, ownerId));
+    	target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_AIRPORT, ownerId, id, position)));
     }
     
     public void complete(){
@@ -116,7 +115,7 @@ public class Plane {
     public void complete(Printable target){
     	complete();
     	
-    	target.print(DispAction.createMoveAction(toIndex(), DispAction.CELL_AIRPORT, ownerId));
+    	target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_AIRPORT, ownerId, id, position)));
     }
     
     public int getRouteCellIndex() {
@@ -141,7 +140,7 @@ public class Plane {
     	return (state==STATE_LANDING && position==PlayRule.getLandLength()-1);
     }
     
-    private int toIndex(){
+    public int toIndex(){
     	return (ownerId*4 + id);
     }
     

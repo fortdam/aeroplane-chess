@@ -16,6 +16,8 @@ class Dice {
 public class Game 
 	implements Player.ActionListener{
 	
+	private int round = 0;
+	
     private Game (Printable target){
     	board = target;
     	dice = new Dice();
@@ -40,16 +42,18 @@ public class Game
     }
     
     public int addPlayer(DecisionMaker client){
-    	int index = addPlayer();
+    	int index = addPlayer()-1;
     	players.get(index).setDecisionMaker(client);
     	return index;
     }
     
     public void done(){
+      board.print(DispAction.createRestAction());
     	currPlayerId++;
     	if (currPlayerId == players.size()){
     		currPlayerId = 0;
     	}
+
     	next();
     }
     
