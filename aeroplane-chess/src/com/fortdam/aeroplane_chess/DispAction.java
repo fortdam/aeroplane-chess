@@ -12,6 +12,7 @@ public class DispAction {
 	public static final int ACTION_MOVE = 2;
 	public static final int ACTION_SYNC = 3;
     public static final int ACTION_REST = 4;
+    public static final int ACTION_FIX = 5;
 	
 	public int actionType;
 	
@@ -50,6 +51,13 @@ public class DispAction {
 		inst.actionType = ACTION_SYNC;
 		inst.chessIndex = aChessIndex;
 		inst.pos = new Cell(dest);
+		return inst;
+	}
+	
+	public static DispAction createFixAction(int aChessIndex){
+		DispAction inst = new DispAction();
+		inst.actionType = ACTION_FIX;
+		inst.chessIndex = aChessIndex;
 		return inst;
 	}
 }

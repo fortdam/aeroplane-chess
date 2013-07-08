@@ -23,6 +23,8 @@ public class Plane {
     	start();
     	
     	target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_START_POINT, ownerId)));
+    	
+    	target.print(DispAction.createFixAction(toIndex()));
     }
     
     public void move(int step){
@@ -96,6 +98,8 @@ public class Plane {
     		position = rule.getShortcut(position);
     		target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_ROUTE, ownerId, id, position)));
     	}
+    	
+    	target.print(DispAction.createFixAction(toIndex()));
     }
     
     public void shoot(){
@@ -106,6 +110,7 @@ public class Plane {
     	shoot();
     	
     	target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_AIRPORT, ownerId, id, position)));
+    	target.print(DispAction.createFixAction(toIndex()));
     }
     
     public void complete(){
@@ -116,6 +121,7 @@ public class Plane {
     	complete();
     	
     	target.print(DispAction.createMoveAction(toIndex(), new Cell(Cell.TYPE_AIRPORT, ownerId, id, position)));
+    	target.print(DispAction.createFixAction(toIndex()));
     }
     
     public int getRouteCellIndex() {

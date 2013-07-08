@@ -168,13 +168,12 @@ class ChessElement {
 					@Override
 					public void onAnimationEnd(Animation anim){
 						ViewGroup parent = (ViewGroup)item.getParent();
-						item.clearAnimation();
+						
 						parent.updateViewLayout(item, 
 								new AbsoluteLayout.LayoutParams(
 										ViewGroup.LayoutParams.WRAP_CONTENT, 
 										ViewGroup.LayoutParams.WRAP_CONTENT, 
 										x - width/2, y -height/2)); 
-				
 						if (handler != null){
 							handler.onAnimationEnd(anim);
 						}
@@ -210,6 +209,7 @@ class ChessElement {
 		x = (int)(pt.x * dispRatio);
 		y = (int)(pt.y * dispRatio);
 		
+		
 		if (parent.indexOfChild(item) != -1){
 			Log.w("Aeroplane", "The view is already inserted into the parent "+item);
 			
@@ -229,6 +229,19 @@ class ChessElement {
 							x - width/2, y - height/2));
 
 		}
+	}
+	
+	//XXX To work around an animation issue here.
+	public void fixItem(){
+		item.clearAnimation();
+		item.setTranslationX(0);
+		item.setTranslationY(0);
+		ViewGroup parent = (ViewGroup)item.getParent();
+		parent.updateViewLayout(item, 
+				new AbsoluteLayout.LayoutParams(
+						ViewGroup.LayoutParams.WRAP_CONTENT,
+						ViewGroup.LayoutParams.WRAP_CONTENT,
+						x - width/2, y - height/2));
 	}
 	
 	public void setVisibility(boolean visible){
@@ -424,7 +437,17 @@ public class MainActivity extends Activity
 					}
 				});
 				break;
+				
+			case DispAction.ACTION_FIX:
+				item = items.get(currentAction.chessIndex);
+				item.fixItem();
+				processAction();
+				break;
+				
+			default:
+				break;	
 			}
+
 		}
 		else{
 			isProcessing = false;
