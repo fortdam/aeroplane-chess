@@ -1,1 +1,1 @@
-First just to test the github and Java
+Try Android SDK, with making a small inter-active game.
